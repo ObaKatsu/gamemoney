@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>比賽活動成本損益分析器</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --light: #ecf0f1;
+        }
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        .section {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Fix padding issue */
+            font-size: 16px;
+        }
+        .result-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .profit { color: var(--success); }
+        .loss { color: var(--danger); }
+        
+        .analysis-box {
+            background-color: #e8f6f3;
+            border-left: 5px solid var(--accent);
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover { background-color: #2980b9; }
+        .row-total {
+            border-top: 1px solid #ccc;
+            margin-top: 10px;
+            padding-top: 5px;
+            font-weight: bold;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏆 比賽活動成本損益分析器</h1>
+
+    <div class="grid">
+        <div>
+            <div class="section">
+                <h3>1. 固定成本 (不論人數都要付)</h3>
+                <div class="input-group">
+                    <label>工作人員人數</label>
+                    <input type="number" id="staffCount" value="3">
+                </div>
+                <div class="input-group">
+                    <label>每位工作人員費用 ($)</label>
+                    <input type="number" id="staffCost" value="2000">
+                </div>
+                <div class="input-group">
+                    <label>其他固定雜支 (行銷/布置) ($)</label>
+                    <input type="number" id="otherFixed" value="1000" placeholder="例如：水、便當、廣告">
+                </div>
+                <div class="row-total">固定成本小計: $<span id="totalFixedDisplay">0</span></div>
+            </div>
+
+            <div class="section">
+                <h3>2. 變動成本 (每多一人就要付)</h3>
+                <div class="input-group">
+                    <label>每人場地費 ($)</label>
+                    <input type="number" id="varVenue" value="500">
+                </div>
+                <div class="input-group">
+                    <label>每人獎品費 ($)</label>
+                    <input type="number" id="varPrize" value="100">
+                </div>
+                <div class="row-total">單人變動成本: $<span id="totalVarDisplay">0</span></div>
+            </div>
+
+            <div class="section" style="border: 2px solid var(--accent); background: white;">
+                <h3>3. 營收預測</h3>
+                <div class="input-group">
+                    <label>預計報名費 (每人) ($)</label>
+                    <input type="number" id="ticketPrice" value="1200">
+                </div>
+                <div class="input-group">
+                    <label>預估參賽人數</label>
+                    <input type="number" id="participants" value="25">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section">
+                <h3>📊 財務分析結果</h3>
+                
+                <div class="result-card">
+                    <label>預估總利潤 (淨利)</label>
+                    <div class="result-value" id="netProfit">0</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label>損益兩平點 (至少要收多少錢/人)</label>
+                    <div style="font-size: 1.2em; font-weight:bold;" id="breakEvenPrice">0</div>
+                    <small>以當前人數計算</small>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label>安全人數 (至少要有幾人報名)</label>
+                    <div style="font-size: 1.2em; font-weight:bold;" id="breakEvenCount">0</div>
+                    <small>以當前定價計算</small>
+                </div>
+                
+                <hr>
+                
+                <p><strong>總收入：</strong> $<span id="totalRevenue">0</span></p>
+                <p><strong>總支出：</strong> $<span id="totalExpense">0</span></p>
+            </div>
+
+            <div class="analysis-box" id="analysisText">
+                顧問建議將顯示於此...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 獲取 DOM 元素
+    const inputs = document.querySelectorAll('input');
+    
+    // 綁定事件
+    inputs.forEach(input => {
+        input.addEventListener('input', calculate);
+    });
+
+    function calculate() {
+        // 1. 獲取數值
+        const staffCount = Number(document.getElementById('staffCount').value) || 0;
+        const staffCost = Number(document.getElementById('staffCost').value) || 0;
+        const otherFixed = Number(document.getElementById('otherFixed').value) || 0;
+        
+        const varVenue = Number(document.getElementById('varVenue').value) || 0;
+        const varPrize = Number(document.getElementById('varPrize').value) || 0;
+        
+        const ticketPrice = Number(document.getElementById('ticketPrice').value) || 0;
+        const participants = Number(document.getElementById('participants').value) || 0;
+
+        // 2. 計算邏輯
+        const totalFixed = (staffCount * staffCost) + otherFixed;
+        const unitVariable = varVenue + varPrize;
+        
+        const totalRevenue = ticketPrice * participants;
+        const totalExpense = totalFixed + (unitVariable * participants);
+        const profit = totalRevenue - totalExpense;
+
+        // 損益兩平價格 (Total Fixed / Participants) + Unit Variable
+        const bepPrice = participants > 0 ? (totalFixed / participants) + unitVariable : 0;
+
+        // 損益兩平人數 (Total Fixed / (Ticket Price - Unit Variable))
+        const contributionMargin = ticketPrice - unitVariable;
+        let bepCount = 0;
+        let bepText = "";
+        
+        if (contributionMargin <= 0) {
+            bepText = "無法回本 (定價過低)";
+        } else {
+            bepCount = Math.ceil(totalFixed / contributionMargin);
+            bepText = bepCount + " 人";
+        }
+
+        // 3. 更新顯示
+        document.getElementById('totalFixedDisplay').innerText = totalFixed.toLocaleString();
+        document.getElementById('totalVarDisplay').innerText = unitVariable.toLocaleString();
+        document.getElementById('totalRevenue').innerText = totalRevenue.toLocaleString();
+        document.getElementById('totalExpense').innerText = totalExpense.toLocaleString();
+        
+        const profitEl = document.getElementById('netProfit');
+        profitEl.innerText = "$" + profit.toLocaleString();
+        if (profit >= 0) {
+            profitEl.className = "result-value profit";
+            profitEl.innerText = "+$" + profit.toLocaleString();
+        } else {
+            profitEl.className = "result-value loss";
+        }
+
+        document.getElementById('breakEvenPrice').innerText = "$" + Math.ceil(bepPrice).toLocaleString();
+        document.getElementById('breakEvenCount').innerText = bepText;
+
+        // 4. 顧問動態建議
+        const analysisEl = document.getElementById('analysisText');
+        let advice = "";
+
+        if (profit < 0) {
+            advice = "⚠️ <strong>警告：目前的設定會虧損！</strong><br>建議：提高報名費，或是增加參賽人數。";
+            if (contributionMargin <= 0) {
+                advice += "<br>❌ <strong>嚴重問題：</strong>你的報名費連支付場地和獎品都不夠（每人做白工），完全無法分攤工作人員費用。";
+            }
+        } else {
+            const marginRate = (profit / totalRevenue * 100).toFixed(1);
+            advice = `✅ <strong>計畫可行！</strong><br>預估淨利率為 <strong>${marginRate}%</strong>。`;
+            
+            if (participants < bepCount + 3) {
+                advice += "<br>⚠️ <strong>注意：</strong>雖然獲利，但離損益兩平點很近，若有幾人臨時缺席可能會虧損。";
+            } else {
+                advice += "<br>💼 這個模型相當穩健，有足夠的抗風險能力。";
+            }
+        }
+        analysisEl.innerHTML = advice;
+    }
+
+    // 初始化計算
+    calculate();
+</script>
+
+</body>
+</html>
